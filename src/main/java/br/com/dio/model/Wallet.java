@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-@ToString
+
 public abstract class Wallet {
 
     @Getter
@@ -54,5 +54,11 @@ public abstract class Wallet {
     }
 
 
-
+    @Override
+    public String toString() {
+        return "Wallet{" +
+                "service=" + service +
+                ", money= R$" + money.size() / 100 +","+ money.size() % 100+
+                '}';
+    }
 }

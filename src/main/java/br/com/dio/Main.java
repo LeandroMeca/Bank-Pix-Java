@@ -3,6 +3,7 @@ package br.com.dio;
 
 import br.com.dio.expcetion.AccountNotFoundException;
 import br.com.dio.expcetion.NoFoundEnoughException;
+import br.com.dio.expcetion.WalletNotFoundException;
 import br.com.dio.model.AccountWallet;
 import br.com.dio.repository.AccountRepository;
 import br.com.dio.repository.InvestmentRepository;
@@ -12,6 +13,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class Main {
@@ -28,7 +30,7 @@ public class Main {
             System.out.println("Selecione a operação desejada");
             System.out.println("1 - Criar uma conta");
             System.out.println("2 - Criar um investimento");
-            System.out.println("3 - Fazer um investimento");
+            System.out.println("3 - Criar uma carteira de investimento");
             System.out.println("4 - Depositar na conta");
             System.out.println("5 - Sacar da conta");
             System.out.println("6 - Transferencia entre contas");
@@ -43,21 +45,21 @@ public class Main {
 
             var option = scanner.nextInt();
             switch (option){
-                case 1: createAccount();
-                case 2: createInvestment();
-                case 3: createWalletInvestment();
-                case 4: deposit();
-                case 5: withdraw();
-                case 6: transferToAccount();
-                case 7: incInvestment();
-                case 8: rescueInvestment();
-                case 9: accountRepository.list().forEach(System.out::println);
-                case 10: investmentRepository.list().forEach(System.out::println);
-                case 11: investmentRepository.listWallets().forEach(System.out::println);
-                case 12: { investmentRepository.updateAmount(); System.out.println("Investimento reajustados");}
-                case 13:
-                case 14: System.exit(0);
-                default: System.out.println("Opção inválida");
+                case 1-> createAccount();
+                case 2-> createInvestment();
+                case 3-> createWalletInvestment();
+                case 4-> deposit();
+                case 5-> withdraw();
+                case 6-> transferToAccount();
+                case 7-> incInvestment();
+                case 8-> rescueInvestment();
+                case 9-> accountRepository.list().forEach(System.out::println);
+                case 10-> investmentRepository.list().forEach(System.out::println);
+                case 11-> investmentRepository.listWallets().forEach(System.out::println);
+                case 12-> { investmentRepository.updateAmount(); System.out.println("Investimento reajustados");}
+                case 13-> checkHistory();
+                case 14-> System.exit(0);
+                default -> System.out.println("Opção inválida");
             }
         }
     }
@@ -141,7 +143,7 @@ public class Main {
         var amount = scanner.nextLong();
         try {
             investmentRepository.deposit(pix, amount);
-        }catch (AccountNotFoundException ex){
+        }catch (WalletNotFoundException | AccountNotFoundException ex){
             System.out.println(ex.getMessage());
         }
     }
@@ -165,9 +167,13 @@ public class Main {
         var pix = scanner.next();
         AccountWallet wallet;
         try{
-            wallet = accountRepository.findByPix(pix);
-            var audit = wallet.getFinanciaTransaction();
-            var group = audit.stream().collect(Collectors.groupingBy(t -> t.createdAt().truncatedTo(SECONDS)));
+           var sortedHistory = accountRepository.getHistory(pix);
+           sortedHistory.forEach((k, v)->{
+               System.out.println(k.format(ISO_DATE_TIME));
+               System.out.println(v.getFirst().transactionId());
+               System.out.println(v.getFirst().description());
+               System.out.println("R$ "+(v.size()/100) +","+ (v.size() % 100));
+           });
         }catch (AccountNotFoundException ex){
             System.out.println(ex.getMessage());
         }
